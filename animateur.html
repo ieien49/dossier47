@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dossier n°47 — Panneau animateur</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.16);
+    --text: #f0f0ee;
+    --text-sub: #9b9ea8;
+    --text-muted: #5c5f6b;
+    --accent: #4f7cff;
+    --accent-bg: rgba(79,124,255,0.12);
+    --accent-border: rgba(79,124,255,0.3);
+    --success: #3ecf8e;
+    --success-bg: rgba(62,207,142,0.1);
+    --success-border: rgba(62,207,142,0.3);
+    --warning: #f5a623;
+    --warning-bg: rgba(245,166,35,0.1);
+    --warning-border: rgba(245,166,35,0.3);
+    --danger: #ff5c5c;
+    --danger-bg: rgba(255,92,92,0.1);
+    --danger-border: rgba(255,92,92,0.3);
+    --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --radius: 10px;
+  }
+
+  html, body {
+    min-height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+  }
+
+  .layout {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    background: var(--surface);
+    border: 0.5px solid var(--border-strong);
+    border-radius: var(--radius);
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .header-badge {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: var(--accent-bg);
+    color: var(--accent);
+    border: 0.5px solid var(--accent-border);
+    border-radius: 6px;
+    padding: 3px 10px;
+  }
+  .header-title { font-size: 16px; font-weight: 600; color: var(--text); }
+  .header-sub { font-size: 13px; color: var(--text-muted); }
+
+  .timer-display {
+    font-size: 36px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    transition: color 0.3s;
+  }
+  .timer-display.urgent { color: var(--danger); }
+
+  /* MAIN GRID */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 1.25rem;
+    align-items: start;
+  }
+
+  /* CARD */
+  .card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+  }
+  .card-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+  }
+
+  /* STEPS */
+  .steps { display: flex; flex-direction: column; gap: 10px; }
+  .step {
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.1rem;
+    cursor: default;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .step.active {
+    border-color: var(--accent-border);
+    background: var(--accent-bg);
+  }
+  .step.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+  }
+  .step.done {
+    opacity: 0.55;
+    border-color: var(--success-border);
+  }
+  .step.done::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--success);
+  }
+  .step.locked { opacity: 0.35; }
+
+  .step-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .step-n {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 0.5px solid var(--border-strong);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600;
+    color: var(--text-sub);
+    flex-shrink: 0;
+  }
+  .step.active .step-n { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .step.done .step-n { background: var(--success); border-color: var(--success); color: #fff; }
+  .step-title { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; }
+  .step-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-weight: 500;
+    background: var(--surface2);
+    color: var(--text-muted);
+    border: 0.5px solid var(--border);
+  }
+  .step.active .step-badge { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-border); }
+  .step.done .step-badge { background: var(--success-bg); color: var(--success); border-color: var(--success-border); }
+
+  .step-situation {
+    font-size: 13px;
+    color: var(--text-sub);
+    line-height: 1.55;
+    padding-left: 36px;
+    margin-bottom: 8px;
+  }
+  .step-question {
+    font-size: 13px;
+    color: var(--accent);
+    padding: 8px 11px;
+    background: rgba(79,124,255,0.07);
+    border-left: 2px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    margin-left: 36px;
+    line-height: 1.45;
+  }
+  .step.locked .step-situation,
+  .step.locked .step-question,
+  .step.done .step-question { display: none; }
+
+  /* CONTROLS */
+  .controls { display: flex; flex-direction: column; gap: 10px; }
+
+  .btn {
+    width: 100%;
+    padding: 11px 16px;
+    border-radius: var(--radius);
+    border: 0.5px solid var(--border-strong);
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font);
+  }
+  .btn:hover:not(:disabled) { background: #2a2e44; border-color: var(--accent-border); }
+  .btn:disabled { opacity: 0.35; cursor: default; }
+
+  .btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-size: 15px;
+    padding: 13px 16px;
+  }
+  .btn.primary:hover:not(:disabled) { background: #3d6ef0; }
+
+  .btn.danger { border-color: var(--danger-border); color: var(--danger); }
+  .btn.danger:hover:not(:disabled) { background: var(--danger-bg); }
+
+  .btn.warning { border-color: var(--warning-border); color: var(--warning); }
+  .btn.warning:hover:not(:disabled) { background: var(--warning-bg); }
+
+  .btn.success { border-color: var(--success-border); color: var(--success); }
+  .btn.success:hover:not(:disabled) { background: var(--success-bg); }
+
+  .sep {
+    height: 0.5px;
+    background: var(--border);
+    margin: 4px 0;
+  }
+
+  /* INCIDENTS */
+  .incident-list { display: flex; flex-direction: column; gap: 8px; }
+  .incident-item {
+    padding: 10px 12px;
+    background: var(--surface2);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 13px;
+    color: var(--text-sub);
+    cursor: pointer;
+    transition: all 0.15s;
+    line-height: 1.45;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .incident-item:hover { border-color: var(--warning-border); color: var(--warning); background: var(--warning-bg); }
+  .incident-item.used { opacity: 0.35; pointer-events: none; }
+  .incident-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--warning); flex-shrink: 0; margin-top: 5px; }
+
+  /* ACTIVE INCIDENT */
+  .active-incident {
+    display: none;
+    padding: 10px 14px;
+    background: var(--warning-bg);
+    border: 0.5px solid var(--warning-border);
+    border-radius: var(--radius);
+    gap: 10px;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+  .active-incident.show { display: flex; }
+  .ai-text { font-size: 13px; color: var(--warning); flex: 1; line-height: 1.45; }
+  .ai-close {
+    font-size: 16px;
+    color: var(--warning);
+    cursor: pointer;
+    opacity: 0.7;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .ai-close:hover { opacity: 1; }
+
+  /* JOURNAL */
+  .journal { display: flex; flex-direction: column; gap: 5px; max-height: 220px; overflow-y: auto; }
+  .j-entry {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    font-size: 13px;
+    color: var(--text-sub);
+    padding: 5px 8px;
+    border-radius: 6px;
+    animation: fadeIn 0.3s ease;
+  }
+  .j-entry:nth-child(even) { background: rgba(255,255,255,0.02); }
+  .j-time { font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+  .j-entry.inc { color: var(--warning); }
+  .j-entry.ok { color: var(--success); }
+
+  /* STATUS BAR */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .sync-live { display: flex; align-items: center; gap: 6px; color: var(--success); }
+  .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); animation: pulse 2.5s infinite; }
+
+  /* MODAL CONFIRM */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 0.5px solid var(--border-strong);
+    border-radius: 14px;
+    padding: 1.5rem;
+    max-width: 380px;
+    width: 90%;
+  }
+  .modal-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+  .modal-sub { font-size: 14px; color: var(--text-sub); margin-bottom: 1.5rem; line-height: 1.5; }
+  .modal-btns { display: flex; gap: 10px; }
+  .modal-btns .btn { flex: 1; justify-content: center; }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+</style>
+</head>
+<body>
+
+<!-- RESET MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-title">Recommencer la partie ?</div>
+    <div class="modal-sub">Toute la progression sera perdue. La vue publique reviendra à l'écran de titre.</div>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeModal()">Annuler</button>
+      <button class="btn danger" onclick="confirmReset()">Recommencer</button>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-badge">Animateur</div>
+      <div>
+        <div class="header-title">Dossier n°47 — Alex, 43 ans</div>
+        <div class="header-sub">Panneau de contrôle — la vue publique se synchronise automatiquement</div>
+      </div>
+    </div>
+    <div class="timer-display" id="timer">15:00</div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="main-grid">
+
+    <!-- LEFT : STEPS -->
+    <div>
+      <div class="card">
+        <div class="card-label">Étapes du parcours</div>
+        <div class="steps" id="steps-container"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT : CONTROLS + INCIDENTS + JOURNAL -->
+    <div style="display:flex;flex-direction:column;gap:1.25rem;">
+
+      <!-- CONTROLS -->
+      <div class="card">
+        <div class="card-label">Actions</div>
+        <div class="controls">
+          <button class="btn primary" id="btn-start" onclick="startGame()">▶ Démarrer la partie</button>
+          <button class="btn success" id="btn-next" onclick="nextStep()" disabled>✓ Valider l'étape en cours</button>
+          <div class="sep"></div>
+          <button class="btn" id="btn-pause" onclick="togglePause()" disabled>⏸ Mettre en pause</button>
+          <button class="btn danger" onclick="openModal()">↺ Recommencer</button>
+        </div>
+      </div>
+
+      <!-- INCIDENTS -->
+      <div class="card">
+        <div class="card-label">Injecter un incident</div>
+        <div class="active-incident" id="active-incident">
+          <div class="ai-text" id="active-incident-text"></div>
+          <span class="ai-close" onclick="dismissIncident()">✕</span>
+        </div>
+        <div class="incident-list" id="incident-list"></div>
+      </div>
+
+      <!-- JOURNAL -->
+      <div class="card">
+        <div class="card-label">Journal de session</div>
+        <div class="journal" id="journal"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    <span>Vue publique : ouvrir <strong>public.html</strong> dans un autre onglet ou second écran</span>
+    <span class="sync-live"><div class="sync-dot"></div> Synchronisation active</span>
+  </div>
+
+</div>
+
+<script>
+const STEPS = [
+  {
+    title: "Chercher de l'information",
+    situation: "Alex ne sait pas par où commencer. Un·e ami·e lui conseille de chercher sur internet. Elle/Il tape « aides financières séparation » dans un moteur de recherche.",
+    question: "Le groupe vote : quel site ou dispositif conseiller à Alex en premier ?"
+  },
+  {
+    title: "Premier contact téléphonique",
+    situation: "Alex appelle un numéro trouvé en ligne. Après 38 minutes d'attente, un agent lui explique qu'il faut prendre rendez-vous via un site — mais aucun créneau n'est disponible avant 6 semaines.",
+    question: "Le groupe vote : comment l'agent aurait pu mieux orienter Alex à ce moment-là ?"
+  },
+  {
+    title: "Se déplacer au guichet",
+    situation: "Alex arrive avec ce qu'elle/il a pu rassembler. On lui demande une pièce supplémentaire qui n'était pas dans la liste initiale. Nouveau rendez-vous dans 3 semaines.",
+    question: "Le groupe vote : comment éviter cette rupture dans le parcours ?"
+  },
+  {
+    title: "Attendre une décision",
+    situation: "Trois semaines plus tard, Alex reçoit un courrier menaçant de classer le dossier sans suite. Alex pense avoir commis une erreur et ne répond pas.",
+    question: "Le groupe vote : comment éviter qu'Alex abandonne à cette étape ?"
+  },
+  {
+    title: "Décision finale",
+    situation: "Deux droits sont accordés. Un troisième est refusé pour vice de forme — un justificatif n'était pas au bon format. Alex n'a pas été informé·e du motif précis.",
+    question: "Le groupe vote : Alex doit-elle/il contester ? Qui l'accompagne dans cette démarche ?"
+  }
+];
+
+const INCIDENTS = [
+  "Alex essaie de rappeler le numéro noté sur un document — il sonne dans le vide.",
+  "Alex ne maîtrise pas bien l'écrit. Les formulaires en ligne sont un obstacle.",
+  "Le dossier a changé de service responsable sans qu'Alex en soit informé·e.",
+  "La personne qui suivait le dossier d'Alex est absente. Son remplaçant repart de zéro.",
+  "Un courrier important a été envoyé à une ancienne adresse. Alex ne l'a jamais reçu.",
+  "La plateforme de dépôt de documents refuse les fichiers — sans expliquer pourquoi.",
+  "Une incohérence dans les informations d'Alex entre deux systèmes bloque le traitement automatique."
+];
+
+let state = {
+  step: 0,
+  timer: 900,
+  started: false,
+  finished: false,
+  paused: false,
+  incident: null,
+  journal: [],
+  usedIncidents: []
+};
+let timerInterval = null;
+
+/* ---- PERSIST ---- */
+function save() {
+  localStorage.setItem('dossier47_state', JSON.stringify(state));
+}
+
+/* ---- TIMER ---- */
+function startTimer() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    if (state.paused || state.finished) return;
+    state.timer = Math.max(0, state.timer - 1);
+    renderTimer();
+    save();
+    if (state.timer === 0) clearInterval(timerInterval);
+  }, 1000);
+}
+
+function renderTimer() {
+  const m = Math.floor(state.timer / 60), s = state.timer % 60;
+  const el = document.getElementById('timer');
+  el.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  el.className = 'timer-display' + (state.timer <= 120 ? ' urgent' : '');
+}
+
+/* ---- JOURNAL ---- */
+function elapsed() {
+  const e = 900 - state.timer;
+  const m = Math.floor(e / 60), s = e % 60;
+  return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+
+function addLog(text, type) {
+  state.journal.push({ time: elapsed(), text, type: type || '' });
+  renderJournal();
+}
+
+function renderJournal() {
+  const el = document.getElementById('journal');
+  el.innerHTML = '';
+  state.journal.forEach(e => {
+    const div = document.createElement('div');
+    div.className = 'j-entry' + (e.type === 'incident' ? ' inc' : e.type === 'success' ? ' ok' : '');
+    div.innerHTML = `<span class="j-time">${e.time}</span><span>${e.text}</span>`;
+    el.appendChild(div);
+  });
+  el.scrollTop = el.scrollHeight;
+}
+
+/* ---- STEPS ---- */
+function renderSteps() {
+  const container = document.getElementById('steps-container');
+  container.innerHTML = '';
+  STEPS.forEach((s, i) => {
+    const status = i < state.step ? 'done' : i === state.step ? 'active' : 'locked';
+    const label = status === 'done' ? 'Validé' : status === 'active' ? 'En cours' : 'En attente';
+    const div = document.createElement('div');
+    div.className = 'step ' + status;
+    div.innerHTML = `
+      <div class="step-row">
+        <div class="step-n">${status === 'done' ? '✓' : (i+1)}</div>
+        <div class="step-title">${s.title}</div>
+        <div class="step-badge">${label}</div>
+      </div>
+      <div class="step-situation">${s.situation}</div>
+      <div class="step-question">${s.question}</div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+/* ---- INCIDENTS ---- */
+function renderIncidents() {
+  const list = document.getElementById('incident-list');
+  list.innerHTML = '';
+  INCIDENTS.forEach((inc, i) => {
+    const div = document.createElement('div');
+    div.className = 'incident-item' + (state.usedIncidents.includes(i) ? ' used' : '');
+    div.innerHTML = `<div class="incident-dot"></div><span>${inc}</span>`;
+    div.onclick = () => injectIncident(i);
+    list.appendChild(div);
+  });
+
+  const ai = document.getElementById('active-incident');
+  if (state.incident) {
+    document.getElementById('active-incident-text').textContent = state.incident;
+    ai.classList.add('show');
+  } else {
+    ai.classList.remove('show');
+  }
+}
+
+function injectIncident(i) {
+  if (!state.started || state.finished) return;
+  state.incident = INCIDENTS[i];
+  if (!state.usedIncidents.includes(i)) state.usedIncidents.push(i);
+  addLog('Incident injecté : ' + INCIDENTS[i], 'incident');
+  renderIncidents();
+  save();
+}
+
+function dismissIncident() {
+  state.incident = null;
+  renderIncidents();
+  save();
+}
+
+/* ---- GAME ACTIONS ---- */
+function startGame() {
+  state.started = true;
+  document.getElementById('btn-start').disabled = true;
+  document.getElementById('btn-next').disabled = false;
+  document.getElementById('btn-pause').disabled = false;
+  addLog('Partie démarrée — Dossier n°47 ouvert.', '');
+  startTimer();
+  renderSteps();
+  save();
+}
+
+function nextStep() {
+  if (!state.started || state.finished) return;
+  if (state.step < STEPS.length) {
+    addLog('Étape ' + (state.step + 1) + ' validée — « ' + STEPS[state.step].title + ' »', 'success');
+    state.step++;
+    if (state.step >= STEPS.length) {
+      state.finished = true;
+      clearInterval(timerInterval);
+      document.getElementById('btn-next').disabled = true;
+      document.getElementById('btn-pause').disabled = true;
+      addLog('Parcours terminé — Alex obtient ses droits.', 'success');
+    }
+    renderSteps();
+    save();
+  }
+}
+
+function togglePause() {
+  if (!state.started || state.finished) return;
+  state.paused = !state.paused;
+  const btn = document.getElementById('btn-pause');
+  btn.textContent = state.paused ? '▶ Reprendre' : '⏸ Mettre en pause';
+  addLog(state.paused ? 'Partie mise en pause.' : 'Partie reprise.', '');
+  save();
+}
+
+function openModal() { document.getElementById('modal').classList.add('show'); }
+function closeModal() { document.getElementById('modal').classList.remove('show'); }
+function confirmReset() {
+  closeModal();
+  clearInterval(timerInterval);
+  state = { step: 0, timer: 900, started: false, finished: false, paused: false, incident: null, journal: [], usedIncidents: [] };
+  document.getElementById('btn-start').disabled = false;
+  document.getElementById('btn-next').disabled = true;
+  document.getElementById('btn-pause').disabled = true;
+  document.getElementById('btn-pause').textContent = '⏸ Mettre en pause';
+  renderTimer();
+  renderSteps();
+  renderJournal();
+  renderIncidents();
+  save();
+}
+
+/* ---- INIT ---- */
+renderTimer();
+renderSteps();
+renderJournal();
+renderIncidents();
+</script>
+</body>
+</html>
