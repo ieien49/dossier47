@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dossier n°47 — Vue publique</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.14);
+    --text: #f0f0ee;
+    --text-sub: #9b9ea8;
+    --text-muted: #5c5f6b;
+    --accent: #4f7cff;
+    --accent-bg: rgba(79,124,255,0.12);
+    --accent-border: rgba(79,124,255,0.3);
+    --success: #3ecf8e;
+    --success-bg: rgba(62,207,142,0.1);
+    --success-border: rgba(62,207,142,0.3);
+    --warning: #f5a623;
+    --warning-bg: rgba(245,166,35,0.1);
+    --warning-border: rgba(245,166,35,0.3);
+    --done: #3ecf8e;
+    --locked: #3a3d4a;
+    --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    overflow: hidden;
+  }
+
+  .screen {
+    height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 0;
+    padding: 2.5rem 3rem;
+  }
+
+  /* TITLE SLIDE */
+  #title-slide {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    text-align: center;
+    transition: opacity 0.6s ease;
+  }
+  #title-slide.hidden { opacity: 0; pointer-events: none; }
+
+  .title-eyebrow {
+    font-size: 13px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+  }
+  .title-dossier {
+    font-size: clamp(56px, 8vw, 96px);
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+  .title-dossier span { color: var(--accent); }
+  .title-tagline {
+    font-size: clamp(18px, 2.5vw, 26px);
+    color: var(--text-sub);
+    font-weight: 400;
+    margin-bottom: 3rem;
+    max-width: 640px;
+    line-height: 1.4;
+  }
+  .title-persona {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+    padding: 1.25rem 2rem;
+    background: var(--surface);
+    border: 0.5px solid var(--border-strong);
+    border-radius: 16px;
+    margin-bottom: 3rem;
+  }
+  .persona-avatar {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: var(--accent-bg);
+    border: 1.5px solid var(--accent-border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .persona-info { text-align: left; }
+  .persona-name { font-size: 22px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .persona-desc { font-size: 14px; color: var(--text-sub); line-height: 1.5; }
+  .title-start-hint {
+    font-size: 14px;
+    color: var(--text-muted);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .pulse {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  /* GAME SCREEN */
+  .top-bar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+  }
+  .dossier-label {
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .dossier-name { font-size: clamp(28px, 3.5vw, 40px); font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .dossier-sub { font-size: 15px; color: var(--text-sub); }
+
+  .timer-wrap { text-align: right; }
+  .timer-label { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+  .timer {
+    font-size: clamp(40px, 5vw, 58px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    transition: color 0.3s;
+  }
+  .timer.urgent { color: #ff5c5c; }
+
+  /* PROGRESS */
+  .progress-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .progress-track {
+    flex: 1;
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 99px;
+    transition: width 0.7s cubic-bezier(0.4,0,0.2,1);
+  }
+  .progress-pct { font-size: 13px; color: var(--text-muted); min-width: 36px; text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* INCIDENT */
+  .incident-bar {
+    background: var(--warning-bg);
+    border: 0.5px solid var(--warning-border);
+    border-radius: 10px;
+    padding: 12px 18px;
+    margin-bottom: 1.5rem;
+    display: none;
+    align-items: center;
+    gap: 12px;
+    animation: slideDown 0.3s ease;
+  }
+  .incident-bar.show { display: flex; }
+  .incident-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--warning); flex-shrink: 0; }
+  .incident-text { font-size: clamp(14px, 1.8vw, 18px); color: var(--warning); flex: 1; }
+  @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+
+  /* STEPS GRID */
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    align-items: stretch;
+  }
+
+  .step-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 14px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .step-card.active {
+    background: var(--accent-bg);
+    border-color: var(--accent-border);
+    border-width: 1px;
+  }
+  .step-card.done {
+    border-color: var(--success-border);
+    opacity: 0.7;
+  }
+  .step-card.locked {
+    opacity: 0.3;
+  }
+
+  .step-num-badge {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 0.5px solid var(--border-strong);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600;
+    color: var(--text-sub);
+  }
+  .step-card.active .step-num-badge { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .step-card.done .step-num-badge { background: var(--success); border-color: var(--success); color: #fff; font-size: 16px; }
+
+  .step-card-title { font-size: clamp(13px, 1.4vw, 16px); font-weight: 600; color: var(--text); line-height: 1.3; }
+  .step-card.locked .step-card-title { color: var(--text-muted); }
+
+  .step-situation {
+    font-size: clamp(12px, 1.2vw, 14px);
+    color: var(--text-sub);
+    line-height: 1.55;
+    flex: 1;
+  }
+  .step-card.locked .step-situation, .step-card.done .step-situation { display: none; }
+
+  .step-question-box {
+    background: rgba(79,124,255,0.08);
+    border: 0.5px solid var(--accent-border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: clamp(12px, 1.2vw, 14px);
+    color: var(--accent);
+    line-height: 1.45;
+  }
+  .step-card:not(.active) .step-question-box { display: none; }
+
+  .step-status-label {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .step-card.active .step-status-label { color: var(--accent); }
+  .step-card.done .step-status-label { color: var(--success); }
+
+  /* BOTTOM BAR */
+  .bottom-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 0.5px solid var(--border);
+  }
+  .journal-scroll {
+    display: flex;
+    gap: 1.5rem;
+    flex: 1;
+    overflow: hidden;
+    mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+  }
+  .journal-entry {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    white-space: nowrap;
+    animation: fadeIn 0.4s ease;
+    flex-shrink: 0;
+  }
+  .j-time { font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .j-text { font-size: 13px; color: var(--text-sub); }
+  .j-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--text-muted); flex-shrink: 0; }
+  .journal-entry.inc .j-text { color: var(--warning); }
+  .journal-entry.ok .j-text { color: var(--success); }
+
+  .sync-badge {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: flex; align-items: center; gap: 5px;
+    flex-shrink: 0;
+    margin-left: 1rem;
+  }
+  .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); animation: pulse 2.5s infinite; }
+
+  /* VICTORY */
+  #victory-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    z-index: 50;
+    animation: fadeIn 0.5s ease;
+  }
+  #victory-overlay.show { display: flex; }
+  .victory-icon { font-size: 80px; margin-bottom: 1rem; }
+  .victory-title { font-size: clamp(36px, 5vw, 60px); font-weight: 700; color: var(--success); margin-bottom: 0.5rem; }
+  .victory-sub { font-size: 20px; color: var(--text-sub); margin-bottom: 3rem; }
+  .debrief-block { max-width: 600px; text-align: left; }
+  .debrief-label { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1rem; }
+  .debrief-q {
+    padding: 14px 18px;
+    background: var(--surface);
+    border: 0.5px solid var(--border-strong);
+    border-radius: 10px;
+    font-size: 17px;
+    color: var(--text);
+    margin-bottom: 10px;
+    line-height: 1.4;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+</style>
+</head>
+<body>
+
+<!-- TITLE SLIDE -->
+<div id="title-slide">
+  <div class="title-eyebrow">Escape game — non-recours aux droits</div>
+  <div class="title-dossier">Dossier <span>n°47</span></div>
+  <div class="title-tagline">Parcours du combattant ou parcours sans couture ?</div>
+  <div class="title-persona">
+    <div class="persona-avatar">A</div>
+    <div class="persona-info">
+      <div class="persona-name">Alex, 43 ans</div>
+      <div class="persona-desc">Assistante maternel·le — séparé·e depuis 8 mois<br>2 enfants à charge — ne sait pas à quoi elle/il a droit</div>
+    </div>
+  </div>
+  <div class="title-start-hint">
+    <div class="pulse"></div>
+    En attente du démarrage par l'animateur
+  </div>
+</div>
+
+<!-- VICTORY -->
+<div id="victory-overlay">
+  <div class="victory-icon">🎖️</div>
+  <div class="victory-title">Alex obtient ses droits</div>
+  <div class="victory-sub">Parcours terminé — place au débriefing</div>
+  <div class="debrief-block">
+    <div class="debrief-label">Questions pour le groupe</div>
+    <div class="debrief-q">1. Quel obstacle vous a le plus marqué dans ce parcours ?</div>
+    <div class="debrief-q">2. Lequel reconnaissez-vous dans votre propre structure ?</div>
+    <div class="debrief-q">3. Une chose concrète à changer — dès demain ?</div>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div class="screen" id="game-screen" style="display:none;">
+
+  <div>
+    <div class="top-bar">
+      <div>
+        <div class="dossier-label">Dossier n°47</div>
+        <div class="dossier-name">Alex, 43 ans</div>
+        <div class="dossier-sub">Assistante maternel·le — séparé·e — 2 enfants à charge</div>
+      </div>
+      <div class="timer-wrap">
+        <div class="timer-label">Temps restant</div>
+        <div class="timer" id="timer">15:00</div>
+      </div>
+    </div>
+
+    <div class="progress-row">
+      <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      <div class="progress-pct" id="progress-pct">0%</div>
+    </div>
+
+    <div class="incident-bar" id="incident-bar">
+      <div class="incident-dot"></div>
+      <div class="incident-text" id="incident-text"></div>
+    </div>
+  </div>
+
+  <div class="steps-grid" id="steps-grid"></div>
+
+  <div class="bottom-bar">
+    <div class="journal-scroll" id="journal"></div>
+    <div class="sync-badge"><div class="sync-dot"></div> Synchronisé</div>
+  </div>
+
+</div>
+
+<script>
+const STEPS = [
+  {
+    title: "Chercher de l'information",
+    situation: "Alex ne sait pas par où commencer. Un·e ami·e lui conseille de chercher sur internet. Elle/Il tape « aides financières séparation » dans un moteur de recherche.",
+    question: "Le groupe vote : quel site ou dispositif conseiller à Alex en premier ?"
+  },
+  {
+    title: "Premier contact téléphonique",
+    situation: "Alex appelle un numéro trouvé en ligne. Après 38 minutes d'attente, un agent lui explique qu'il faut prendre rendez-vous via un site — mais aucun créneau n'est disponible avant 6 semaines.",
+    question: "Le groupe vote : comment l'agent aurait pu mieux orienter Alex à ce moment-là ?"
+  },
+  {
+    title: "Se déplacer au guichet",
+    situation: "Alex arrive avec ce qu'elle/il a pu rassembler. On lui demande une pièce supplémentaire qui n'était pas dans la liste initiale. Nouveau rendez-vous dans 3 semaines.",
+    question: "Le groupe vote : comment éviter cette rupture dans le parcours ?"
+  },
+  {
+    title: "Attendre une décision",
+    situation: "Trois semaines plus tard, Alex reçoit un courrier administratif menaçant de classer le dossier sans suite. Alex pense avoir fait une erreur et ne répond pas.",
+    question: "Le groupe vote : comment éviter qu'Alex abandonne à cette étape ?"
+  },
+  {
+    title: "Décision finale",
+    situation: "Deux droits sont accordés. Un troisième est refusé pour vice de forme — un justificatif n'était pas au bon format. Alex n'a pas été informé·e du motif précis.",
+    question: "Le groupe vote : Alex doit-elle/il contester ? Qui l'accompagne dans cette démarche ?"
+  }
+];
+
+let state = { step: 0, timer: 900, started: false, finished: false, incident: null, journal: [] };
+
+function applyState(s) {
+  state = s;
+  if (!s.started) return;
+  document.getElementById('title-slide').classList.add('hidden');
+  if (s.finished) {
+    document.getElementById('game-screen').style.display = 'grid';
+    document.getElementById('victory-overlay').classList.add('show');
+    return;
+  }
+  document.getElementById('game-screen').style.display = 'grid';
+  renderTimer(s.timer);
+  renderProgress(s.step);
+  renderIncident(s.incident);
+  renderSteps(s.step);
+  renderJournal(s.journal);
+}
+
+function renderTimer(t) {
+  const m = Math.floor(t / 60), sec = t % 60;
+  const el = document.getElementById('timer');
+  el.textContent = String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+  el.className = 'timer' + (t <= 120 ? ' urgent' : '');
+}
+
+function renderProgress(step) {
+  const pct = Math.round((step / STEPS.length) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent = pct + '%';
+}
+
+function renderIncident(text) {
+  const bar = document.getElementById('incident-bar');
+  if (text) {
+    document.getElementById('incident-text').textContent = text;
+    bar.classList.add('show');
+  } else {
+    bar.classList.remove('show');
+  }
+}
+
+function renderSteps(currentStep) {
+  const grid = document.getElementById('steps-grid');
+  grid.innerHTML = '';
+  STEPS.forEach((s, i) => {
+    const status = i < currentStep ? 'done' : i === currentStep ? 'active' : 'locked';
+    const label = status === 'done' ? 'Validé' : status === 'active' ? 'En cours' : 'En attente';
+    const div = document.createElement('div');
+    div.className = 'step-card ' + status;
+    div.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div class="step-num-badge">${status === 'done' ? '✓' : (i+1)}</div>
+        <div class="step-status-label">${label}</div>
+      </div>
+      <div class="step-card-title">${s.title}</div>
+      ${status !== 'locked' && status !== 'done' ? `<div class="step-situation">${s.situation}</div>` : ''}
+      ${status === 'active' ? `<div class="step-question-box">Vote du groupe&nbsp;: ${s.question}</div>` : ''}
+    `;
+    grid.appendChild(div);
+  });
+}
+
+function renderJournal(entries) {
+  const el = document.getElementById('journal');
+  el.innerHTML = '';
+  const last5 = entries.slice(-5);
+  last5.forEach(e => {
+    const div = document.createElement('div');
+    div.className = 'journal-entry' + (e.type === 'incident' ? ' inc' : e.type === 'success' ? ' ok' : '');
+    div.innerHTML = `<span class="j-time">${e.time}</span><span class="j-dot"></span><span class="j-text">${e.text}</span>`;
+    el.appendChild(div);
+  });
+}
+
+function syncFromStorage() {
+  try {
+    const raw = localStorage.getItem('dossier47_state');
+    if (raw) applyState(JSON.parse(raw));
+  } catch(e) {}
+}
+
+window.addEventListener('storage', e => {
+  if (e.key === 'dossier47_state') syncFromStorage();
+});
+
+syncFromStorage();
+setInterval(syncFromStorage, 1000);
+</script>
+</body>
+</html>
